@@ -46,61 +46,59 @@ function NoteForm({
       onSubmit={handleSubmit}
       className="mb-8 rounded-xl bg-white p-6 shadow-sm"
     >
-      <h2 className="mb-4 text-xl font-semibold text-gray-800">
-        {editingNote ? "Edit Note" : "New Note"}
-      </h2>
+      <div className="mb-5 flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-gray-800">
+          {editingNote ? "Edit Note" : "New Note"}
+        </h2>
+        <button type="button" 
+        onClick={onCancel} 
+        className="text-2xl text-gray-400 hover:text-gray-600" >
+           × 
+        </button> 
+      </div>
 
       <input
         type="text"
         placeholder="Note title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="mb-4 w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+        className="mb-4 w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500" 
       />
-
+      
       <textarea
         placeholder="Write your note..."
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={(e)=> setContent(e.target.value)}
         rows={5}
         className="mb-4 w-full resize-none rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
       />
+
       <select
         value={category}
-        onChange={(e)=>
-          setCategory(e.target.value)
-        }
-        className="mb-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 outline-none focus:border-blue-500"
+        onChange={(e)=>setCategory(e.target.value)}
+        className="mb-5 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 outline-none focus:border-blue-500" 
+      >
+        <option value="Work">Work</option>
+        <option value="Study">Study</option>
+        <option value="Personal">Personal</option>
+      </select>
+
+      <div className="flex justify-end gap-3">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-lg bg-gray-200 px-5 py-2.5 font-medium text-gray-700 hover:bg-gray-300"
         >
-          <option value="Work">
-            Work
-          </option>
-          <option value="Study">
-            Study
-          </option>
-          <option value="Personal">
-            Personal
-          </option>
-        </select>
-      <div className="flex gap-3">
+          Cancel
+        </button>
         <button
           type="submit"
           className="rounded-lg bg-blue-500 px-5 py-2.5 font-medium text-white hover:bg-blue-600"
         >
           {editingNote ? "Update Note" : "Save Note"}
         </button>
-
-        {editingNote && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-lg bg-gray-200 px-5 py-2.5 font-medium text-gray-700 hover:bg-gray-300"
-          >
-            Cancel
-          </button>
-        )}
       </div>
-    </form>
+      </form>
   );
 }
 
