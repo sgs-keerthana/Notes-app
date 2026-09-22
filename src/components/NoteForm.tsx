@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import noteSchema,{type NoteFormData,} from "../schemas/noteSchema";
 import type { Note } from "../types/Note";
 
 type NoteFormProps = {
   editingNote: Note | null;
-  onSave: (title: string, content: string, category: string) => void;
+  onSave: (title: string, content: string, category: Note["category"], priority: Note["priority"]) => void;
   onCancel: () => void;
 };
 
@@ -12,94 +15,129 @@ function NoteForm({
   onSave,
   onCancel,
 }: NoteFormProps) {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [category, setCategory] = useState("Study");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<NoteFormData>({
+    resolver: zodResolver(noteSchema),
+  });
   useEffect(() => {
     if (editingNote) {
-      setTitle(editingNote.title);
-      setContent(editingNote.content);
-      setCategory(editingNote.category);
+      reset({
+        title: editingNote.title,
+        content: editingNote.content,
+        category: editingNote.category,
+        priority: editingNote.priority,
+      });
     } else {
-      setTitle("");
-      setContent("");
-      setCategory("Study");
+      reset({
+        title: "",
+        content: "",
+        category: "Study",
+        priority: "Medium",
+      });
     }
-  }, [editingNote]);
+  }, [editingNote, reset]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!title.trim() || !content.trim()) {
-      return;
-    }
-
-    onSave(title, content, category);
-
-    setTitle("");
-    setContent("");
-    setCategory("Study");
+  const onSubmit = (data: NoteFormData) =>{
+    onSave(
+      data.title,
+      data.content,
+      data.category,
+      data.priority
+    );
+    reset();
   };
-
   return (
     <form
-      onSubmit={handleSubmit}
-      className="mb-8 rounded-xl bg-white p-6 shadow-sm"
-    >
-      <div className="mb-5 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-800">
-          {editingNote ? "Edit Note" : "New Note"}
-        </h2>
-        <button type="button" 
-        onClick={onCancel} 
-        className="text-2xl text-gray-400 hover:text-gray-600" >
-           × 
-        </button> 
-      </div>
+      onSubmit={handleSubmit(onSubmit)}
+      className="mb-8 rounded-xl bg-white p-6 shadow-sm">
+        <div className= "mb-5 flex items-center justify-between">
+          <h2 className= "text-xl font-semibold text-gray-800">
+            {editingNote ? "Edit Note" : "New Note"}
+          </h2>
 
-      <input
-        type="text"
-        placeholder="Note title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        className="mb-4 w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500" 
-      />
-      
-      <textarea
-        placeholder="Write your note..."
-        value={content}
-        onChange={(e)=> setContent(e.target.value)}
-        rows={5}
-        className="mb-4 w-full resize-none rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-      />
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-2xl text-gray-400 hover:text-gray-600">
+               ×
+            </button>
+            </div>
 
-      <select
-        value={category}
-        onChange={(e)=>setCategory(e.target.value)}
-        className="mb-5 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 outline-none focus:border-blue-500" 
-      >
-        <option value="Work">Work</option>
-        <option value="Study">Study</option>
-        <option value="Personal">Personal</option>
-      </select>
+            {/* TITLE*/}
+            <input
+              type="text"
+              placeholder="Note title"
+              {...register("title")}
+              className="mb-1 w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"/>
 
-      <div className="flex justify-end gap-3">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-lg bg-gray-200 px-5 py-2.5 font-medium text-gray-700 hover:bg-gray-300"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="rounded-lg bg-blue-500 px-5 py-2.5 font-medium text-white hover:bg-blue-600"
-        >
-          {editingNote ? "Update Note" : "Save Note"}
-        </button>
-      </div>
+              {errors.title && (
+                <p className="mb-4 text-sm text-red-500">
+                  {errors.title.message}
+                </p>
+              )}
+
+              {/* CONTENT */}
+              <textarea
+                placeholder="Write your note..."
+                {...register("content")}
+                rows={5}
+                className="mb-1 w-full resize-none rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"/>
+
+                {errors.content &&(
+                  <p className="mb-4 text-sm text-red-500">
+                    {errors.content.message}
+                  </p>
+                )}
+
+                {/* CATEGORY */}
+                <select
+                  {...register("category")}
+                  className="mb-5 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 outline-none focus:border-blue-500">
+                    <option value="Work">Work</option>
+                    <option value="Study">Study</option>
+                    <option value="Personal">Personal</option>
+                  </select>
+
+                  {errors.category &&(
+                    <p className="mb-4 text-sm text-red-500">
+                      {errors.category.message}
+                    </p>
+                  )}
+
+                  {/* PRIORITY */}
+                  <select
+                    {...register("priority")}
+                    className="mb-5 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 outline-none focus:border-blue-500">
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                    </select>
+
+                    {errors.priority &&(
+                      <p className="mb-4 text-sm text-red-500">
+                        {errors.priority.message}
+                      </p>
+                    )}
+                    <div className="flex justify-end gap-3">
+                      <button
+                        type="button"
+                        onClick={onCancel}
+                        className="rounded-lg bg-gray-200 px-5 py-2.5 font-medium text-gray-700 hover:bg-gray-300">
+                          Cancel
+                        </button>
+
+                        <button
+                          type="submit"
+                          className="rounded-lg bg-blue-500 px-5 py-2.5 font-medium text-white hover:bg-blue-600">
+                             {editingNote ? "Update Note" : "Save Note"}
+                          </button>
+                    </div>
+                    
       </form>
   );
 }
-
 export default NoteForm;

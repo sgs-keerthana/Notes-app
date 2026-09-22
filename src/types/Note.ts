@@ -2,5 +2,6 @@ export type Note = {
   id: number;
   title: string;
   content: string;
-  category: string;
+  category: "Work" | "Study" | "Personal";
+  priority: "Low" | "Medium" | "High";
 };

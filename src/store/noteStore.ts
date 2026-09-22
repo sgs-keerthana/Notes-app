@@ -15,7 +15,8 @@ type NoteStore = {
       id: number,
       title: string,
       content: string,
-      category: string
+      category: Note["category"],
+      priority: Note["priority"]
     ) => void;
 
     // Delete a note using its ID.
@@ -37,6 +38,7 @@ export const useNoteStore = create<NoteStore>((set) => ({
       title: "Learn React",
       content: "Study components, props, state and hooks.",
       category: "Study",
+      priority: "High",
     },
 
     {
@@ -44,14 +46,13 @@ export const useNoteStore = create<NoteStore>((set) => ({
       title: "Learn TypeScript",
       content: "Practice types, interfaces and generics.",
       category: "Study",
+      priority: "Medium",
     },
   ],
 
  // FILTER STATE
   searchTerm: "",
   category: "All",
-
-// ACTIONS
 
   actions: {
     // ADD NOTE
@@ -62,7 +63,7 @@ export const useNoteStore = create<NoteStore>((set) => ({
       })),
 
     // UPDATE NOTE
-    updateNote: (id, title, content, category) =>
+    updateNote: (id, title, content, category, priority) =>
 
       set((state) => ({
         notes: state.notes.map((note) =>
@@ -72,6 +73,7 @@ export const useNoteStore = create<NoteStore>((set) => ({
                 title,
                 content,
                 category,
+                priority,
               }
             : note
         ),
@@ -79,33 +81,18 @@ export const useNoteStore = create<NoteStore>((set) => ({
 
     // DELETE NOTE
     deleteNote: (id) =>
-
       set((state) => ({
-
-        // filter() creates a new array
-        // containing all notes except
-        // the note with the given ID.
-        notes: state.notes.filter(
-          (note) => note.id !== id
-        ),
+        notes: state.notes.filter((note) => note.id !== id),
       })),
 
     // SET SEARCH TERM
     setSearchTerm: (value) =>
-
-      // Update the searchTerm in the store.
       set({
         searchTerm: value,
       }),
-
-
-    // ----------------------------------------------
+   
     // SET CATEGORY
-    // ----------------------------------------------
-
     setCategory: (value) =>
-
-      // Update the category in the store.
       set({
         category: value,
       }),

@@ -20,6 +20,11 @@ function NoteCard({
       <p className="mb-5 whitespace-pre-wrap text-gray-600">
         {note.content}
       </p>
+      <div className="mb-5 flex gap-2">
+        <span className="rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-700">
+          {note.priority}
+        </span>
+      </div>
 
       <div className="flex gap-3">
         <button

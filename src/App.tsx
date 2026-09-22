@@ -21,14 +21,8 @@ function App() {
   const addNote = useNoteStore((state) => state.actions.addNote);
   const updateNote = useNoteStore((state) => state.actions.updateNote);
   const deleteNote = useNoteStore((state) => state.actions.deleteNote);
-
-  const setSearchTerm = useNoteStore(
-    (state) => state.actions.setSearchTerm
-  );
-
-  const setCategory = useNoteStore(
-    (state) => state.actions.setCategory
-  );
+  const setSearchTerm = useNoteStore((state) => state.actions.setSearchTerm);
+  const setCategory = useNoteStore((state) => state.actions.setCategory);
 
   // Local UI state
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -38,7 +32,8 @@ function App() {
   const handleSave = (
     title: string,
     content: string,
-    category: string
+    category: Note["category"],
+    priority: Note["priority"]
   ) => {
     if (editingNote) {
       // Update existing note
@@ -46,7 +41,8 @@ function App() {
         editingNote.id,
         title,
         content,
-        category
+        category,
+        priority
       );
 
       setEditingNote(null);
@@ -57,6 +53,7 @@ function App() {
         title,
         content,
         category,
+        priority,
       };
 
       addNote(newNote);
@@ -115,8 +112,6 @@ function App() {
           </button>
 
         </div>
-
-
         {/* Search box */}
         <SearchBar
           searchTerm={searchTerm}
