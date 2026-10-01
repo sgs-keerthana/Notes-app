@@ -10,17 +10,8 @@ type NoteFormProps = {
   onCancel: () => void;
 };
 
-function NoteForm({
-  editingNote,
-  onSave,
-  onCancel,
-}: NoteFormProps) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<NoteFormData>({
+function NoteForm({editingNote, onSave,onCancel,}: NoteFormProps) {
+  const {register,handleSubmit,formState: { errors },reset,} = useForm<NoteFormData>({
     resolver: zodResolver(noteSchema),
   });
   useEffect(() => {

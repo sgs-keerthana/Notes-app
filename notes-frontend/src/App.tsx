@@ -1,105 +1,158 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
+import { useMutation,useQuery,useQueryClient} from "@tanstack/react-query";
 import Header from "./components/Header";
 import SearchBar from "./components/SearchBar";
 import NoteCard from "./components/NoteCard";
 import NoteForm from "./components/NoteForm";
 import type { Note } from "./types/Note";
-
-import { useNoteStore } from "./store/noteStore";
 import type { NoteFormData } from "./schemas/noteSchema";
-
+import { useNoteStore } from "./store/noteStore";
+import {fetchNotes, addNote, updateNote, deleteNote} from "./api/notesApi";
+import { notesKeys } from "./queryKeys/notesKeys";
 function App() {
-  // Get all notes from the Zustand store
-  const notes = useNoteStore((state) => state.notes);
-
-  // Get the current search text from Zustand
-  const searchTerm = useNoteStore((state) => state.searchTerm);
-
-  // Get the currently selected category
+  // Get UI state from Zustand
+  const searchTerm = useNoteStore( (state) => state.searchTerm);
   const category = useNoteStore((state) => state.category);
-  const fetchNotes = useNoteStore((state)=>state.actions.fetchNotes);
 
-  // Get actions from Zustand
-  const addNote = useNoteStore((state) => state.actions.addNote);
-  const updateNote = useNoteStore((state) => state.actions.updateNote);
-  const deleteNote = useNoteStore((state) => state.actions.deleteNote);
-  const setSearchTerm = useNoteStore((state) => state.actions.setSearchTerm);
-  const setCategory = useNoteStore((state) => state.actions.setCategory);
+ // Get UI actions from Zustand
+  const setSearchTerm = useNoteStore((state) =>state.actions.setSearchTerm);
+  const setCategory = useNoteStore((state) => state.actions.setCategory );
 
   // Local UI state
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  // Fetch notes from backend when the app loads
-  useEffect(()=> {
-    fetchNotes();
-  },[fetchNotes]);
+  // TanStack Query client
+  const queryClient = useQueryClient();
+  // GET /notes
+  const {
+    data: notes = [],
+    isLoading,isError,error,
+  } = useQuery({queryKey: notesKeys.all, queryFn: fetchNotes,
+  });
 
-  // SAVE NOTE
-  const handleSave = async (note: NoteFormData) => {
-    const { title, category, content, priority } = note;
+  // POST /notes
+  // PUT /notes/{id}
+  const saveNoteMutation = useMutation({
+      mutationFn: async (note: Note | Omit<Note, "id">) => {
+        // Editing existing note
+        if ("id" in note) {
+          return updateNote(note);
+        }
+
+        // Creating new note
+        return addNote(note);
+      },
+
+      onSuccess: () => {
+
+        // Refresh notes data
+        queryClient.invalidateQueries({
+          queryKey: notesKeys.all,
+        });
+
+        setEditingNote(null);
+        setShowForm(false);
+      },
+    });
+
+  // DELETE /notes/{id}
+  
+  const deleteNoteMutation = useMutation({
+      mutationFn: (id:number)=> deleteNote(id),onSuccess: () => {
+
+        // Refresh notes data
+        queryClient.invalidateQueries({
+          queryKey: notesKeys.all,
+        });
+      },
+    });
+
+  // Save note
+  const handleSave = ( note: NoteFormData) => {
+    // Editing
     if (editingNote) {
-      // Update existing note
-     await updateNote(
-        editingNote.id,
-        title,
-        content,
-        category,
-        priority
-      );
-
-      setEditingNote(null);
-    } else {
-      // Create new note
-      await addNote ({
-        id: 0,
-        title,
-        content,
-        category,
-        priority,
+      saveNoteMutation.mutate({
+        id: editingNote.id,
+        title: note.title,
+        content: note.content,
+        category: note.category,
+        priority: note.priority,
       });
-    }
 
-    // Close modal after saving
-    setShowForm(false);
+      return;
+    }
+    // Creating
+    saveNoteMutation.mutate({
+      title: note.title,
+      content: note.content,
+      category: note.category,
+      priority: note.priority,
+    });
   };
 
-  // EDIT NOTE
-  const handleEdit = (note: Note) => {
+  // Edit note
+ 
+  const handleEdit = ( note: Note) => {
     setEditingNote(note);
     setShowForm(true);
   };
 
-  // DELETE NOTE
-  const handleDelete = async(id: number) => {
-   await deleteNote(id);
+  // Delete note
+
+  const handleDelete = ( id: number ) => {
+    deleteNoteMutation.mutate(id);
   };
 
-  // FILTER NOTES
-  const filteredNotes = notes.filter((note) => {
-    const search = searchTerm.toLowerCase();
+  // Filter notes
 
-    const matchesSearch =
-      note.title.toLowerCase().includes(search) ||
-      note.content.toLowerCase().includes(search);
+  const filteredNotes = useMemo(() => {
+    return notes.filter((note) => {
+      const search = searchTerm.toLowerCase();
+      const matchesSearch = note.title.toLowerCase().includes(search) || note.content.toLowerCase().includes(search);
+      const matchesCategory =category === "All" || note.category === category;
+      return (matchesSearch && matchesCategory);
+    });
+  }, [
+    notes,searchTerm,category,
+  ]);
 
-    const matchesCategory =
-      category === "All" || note.category === category;
+  // Loading
 
-    return matchesSearch && matchesCategory;
-  });
+  if (isLoading) {
+    return (
+      <div className="p-10 text-center">
+        Loading notes...
+      </div>
+    );
+  }
 
+  // Error
+  
+  if (isError) {
+    return (
+      <div className="p-10 text-center text-red-500">
+        {error instanceof Error
+          ? error.message
+          : "Failed to fetch notes"}
+      </div>
+    );
+  }
+
+  // UI
   return (
     <div className="min-h-screen bg-gray-100">
+
       <div className="mx-auto max-w-5xl px-6 py-10">
-        {/* Header + New Note button */}
+
+        {/* Header */}
         <div className="flex items-start justify-between">
+
           <Header />
+
           <button
             onClick={() => {
-              // New note, so no note is being edited
               setEditingNote(null);
-              // Open modal
               setShowForm(true);
             }}
             className="rounded-lg bg-blue-500 px-5 py-3 font-medium text-white shadow-sm hover:bg-blue-600"
@@ -108,26 +161,37 @@ function App() {
           </button>
 
         </div>
-        {/* Search box */}
+
+
+        {/* Search */}
+
         <SearchBar
           searchTerm={searchTerm}
           onSearch={setSearchTerm}
         />
 
 
-        {/* Category filter buttons */}
+        {/* Category buttons */}
+
         <div className="mb-6 flex gap-3">
 
-          {["All", "Work", "Study", "Personal"].map((item) => (
+          {[
+            "All",
+            "Work",
+            "Study",
+            "Personal",
+          ].map((item) => (
 
             <button
               key={item}
-              onClick={() => setCategory(item)}
-
-              className={`rounded-lg px-4 py-2 font-medium transition ${category === item
-                ? "bg-blue-500 text-white shadow-sm"
-                : "bg-white text-gray-700 shadow-sm hover:bg-gray-50"
-                }`}
+              onClick={() =>
+                setCategory(item)
+              }
+              className={`rounded-lg px-4 py-2 font-medium transition ${
+                category === item
+                  ? "bg-blue-500 text-white shadow-sm"
+                  : "bg-white text-gray-700 shadow-sm hover:bg-gray-50"
+              }`}
             >
               {item}
             </button>
@@ -137,7 +201,8 @@ function App() {
         </div>
 
 
-        {/* Display notes */}
+        {/* Notes */}
+
         {filteredNotes.length === 0 ? (
 
           <div className="rounded-xl bg-white p-10 text-center shadow-sm">
@@ -152,16 +217,18 @@ function App() {
 
           <div className="grid gap-5 md:grid-cols-2">
 
-            {filteredNotes.map((note) => (
+            {filteredNotes.map(
+              (note) => (
 
-              <NoteCard
-                key={note.id}
-                note={note}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
+                <NoteCard
+                  key={note.id}
+                  note={note}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
 
-            ))}
+              )
+            )}
 
           </div>
 
@@ -170,13 +237,13 @@ function App() {
       </div>
 
 
-      {/* New Note / Edit Note Modal */}
+      {/* Modal */}
+
       {showForm && (
 
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
 
-          // Clicking outside the modal closes it
           onClick={() => {
             setEditingNote(null);
             setShowForm(false);
@@ -186,12 +253,14 @@ function App() {
           <div
             className="w-full max-w-lg"
 
-            // Prevent clicking inside the form from closing the modal
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) =>
+              e.stopPropagation()
+            }
           >
 
             <NoteForm
               editingNote={editingNote}
+
               onSave={handleSave}
 
               onCancel={() => {
@@ -203,7 +272,6 @@ function App() {
           </div>
 
         </div>
-
       )}
 
     </div>
