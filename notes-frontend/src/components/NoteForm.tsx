@@ -33,10 +33,7 @@ function NoteForm({editingNote, onSave,onCancel,}: NoteFormProps) {
   }, [editingNote, reset]);
 
   const onSubmit = (data: NoteFormData) => {
-    onSave(
-      data
-    );
-    reset();
+    onSave( data );
   };
   return (
     <form

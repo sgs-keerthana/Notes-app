@@ -44,7 +44,7 @@ export const updateNote = async (note: Note): Promise<Note>=>{
         {
             method: "PUT",
             headers:{
-                "Content-Type":"application.json",
+                "Content-Type":"application/json",
                 "x-tenant-id": TENANT_ID,
             },
             body: JSON.stringify({
@@ -59,6 +59,29 @@ export const updateNote = async (note: Note): Promise<Note>=>{
         }
         return response.json();
 };
+// PATCH/notes{id}
+export const patchNote=async({id,changes}:
+    {id: number;changes:{priority: Note["priority"];};
+    }): Promise<Note>=>{
+        const response=await fetch(
+            `${API_URL}/${id}`,
+            {
+                method:"PATCH",
+                headers:{
+                    "Content-Type":"application/json",
+                    "x-tenant-id": TENANT_ID,
+                },
+                body: JSON.stringify(changes),
+            }
+        );
+        if(!response.ok){
+            const errorText=await response.text();
+            throw new Error(
+                'Failed to patch note:${response.status}${errorText}'
+            );
+        }
+        return response.json();
+    };
 
 // DELETE /notes{id}
 export const deleteNote = async(id: number):Promise<Note>=>{

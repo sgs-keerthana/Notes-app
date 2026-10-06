@@ -1,6 +1,6 @@
-import { getNotes,createNote,updateNote,deleteNote } from "../handlers/notes.js";
+import { getNotes,createNote,updateNote,deleteNote,patchNote } from "../handlers/notes.js";
 import type Hapi from "@hapi/hapi";
-import { noteSchema,idSchema } from "../validators/valid.js";
+import { noteSchema,idSchema,patchNoteSchema } from "../validators/valid.js";
 
 export const registerNoteRoutes=( server: Hapi.Server)=>{
     server.route({
@@ -28,6 +28,17 @@ export const registerNoteRoutes=( server: Hapi.Server)=>{
             },
         },
         handler: updateNote,
+    });
+    server.route({
+        method: "PATCH",
+        path: "/notes/{id}",
+        options: {
+            validate:{
+                params: idSchema,
+                payload: patchNoteSchema,
+            },
+        },
+        handler: patchNote,
     });
     server.route({
         method: "DELETE",

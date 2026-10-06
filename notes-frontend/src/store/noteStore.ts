@@ -27,4 +27,3 @@ export const useNoteStore = create<NoteStore>((set) => ({
       }),
   },
 }));
-

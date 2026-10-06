@@ -4,4 +4,6 @@ export type Note={
     content: string;
     category: "Work" | "Study" | "Personal";
     priority: "Low" | "Medium" | "High";
+    tenantId: string;
+
 };

@@ -4,12 +4,14 @@ type NoteCardProps = {
   note: Note;
   onEdit: (note: Note) => void;
   onDelete: (id: number) => void;
+  onPriorityChange:(id:number,priority:Note["priority"])=>void;
 };
 
 function NoteCard({
   note,
   onEdit,
   onDelete,
+  onPriorityChange,
 }: NoteCardProps) {
   return (
     <div className="rounded-xl bg-white p-5 shadow-sm">
@@ -25,7 +27,15 @@ function NoteCard({
           {note.priority}
         </span>
       </div>
-
+      <select value={note.priority}onChange={(e)=>onPriorityChange(
+        note.id,
+        e.target.value as Note["priority"]
+      )}
+      className="mb-4 w-full rounded-lg border border-gray-300 px-3 py-2">
+      <option value="Low">Low</option>
+      <option value="Medium">Medium</option>
+      <option value="High">High</option>
+      </select>
       <div className="flex gap-3">
         <button
           onClick={() => onEdit(note)}

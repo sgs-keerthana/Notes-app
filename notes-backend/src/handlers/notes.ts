@@ -1,64 +1,77 @@
 import type Hapi from "@hapi/hapi";
 import Boom from "@hapi/boom";
 import type { Note } from "../definitions/index.js";
-import { notes } from "../data/notess.js";
+import { getNotesByTenant,createNote as createNoteInDatabase,updateNote as updatedNoteInDatabase,deleteNote as deleteNoteFromDatabase,patchNote as patchNoteInDatabase } from "../db/notesQueries.js";
 
-const checkTenant = (request: Hapi.Request) => {
-  const tenantId = request.headers["x-tenant-id"];
+const getTenantId=(request:Hapi.Request): string | null =>{
+  const tenantId=request.headers["x-tenant-id"] as string|undefined;
+  if (!tenantId){
+    return null;
+  }
+  return tenantId;
+};
 
+export const getNotes = async(request: Hapi.Request) => {
+  const tenantId = getTenantId(request);
+  if (!tenantId) {
+    return Boom.unauthorized(
+      "Tenant ID is required"
+    );
+  }
+  const notes = await getNotesByTenant(tenantId);
+  return notes
+};
+export const createNote = async(request: Hapi.Request,h: Hapi.ResponseToolkit) => {
+  const tenantId = getTenantId(request);
   if (!tenantId) {
     return Boom.unauthorized("Tenant ID is required");
   }
-  return null;
+
+  const payload = request.payload as Omit<Note, "id" | "tenantId">;
+  const newNote = await createNoteInDatabase(payload,tenantId);
+  return h.response(newNote).code(201);
 };
-export const getNotes = (request: Hapi.Request) => {
-  const tenantError = checkTenant(request);
-  if (tenantError) {
-    return tenantError;
-  }
-  return notes;
-};
-export const createNote = (request: Hapi.Request,h: Hapi.ResponseToolkit) => {
-  const tenantError = checkTenant(request);
-  if (tenantError) {
-    return tenantError;
-  }
-  const payload = request.payload as Omit<Note, "id">;
-  const newId = notes.length > 0
-      ? Math.max( ...notes.map((note) => note.id)) + 1: 1;
-  const newNote: Note = { id: newId,...payload,
-  };
-  notes.push(newNote);
-  return h .response(newNote) .code(201);
-};
-export const updateNote =(
+export const updateNote = async(
     request: Hapi.Request, h: Hapi.ResponseToolkit)=>{
-    const tenantError = checkTenant(request);
-    if (tenantError){
-        return tenantError;
+    const tenantId = getTenantId(request);
+    if (!tenantId){
+        return Boom.unauthorized("Tenant ID is required");
     }
     const id = Number(request.params.id);
-    const index = notes.findIndex((note)=>note.id===id);
-    if(index === -1){
-        return Boom.notFound("Note not Found");
+    const payload=request.payload as Omit<Note,"id" | "tenantId">;
+    const updatedNote = await updatedNoteInDatabase(id,payload,tenantId);
+    if(!updatedNote){
+      return Boom.notFound("Note not found");
     }
-    const payload=request.payload as Omit<Note,"id">;
-    const updatedNote: Note={id,...payload};
-    notes[index]=updatedNote;
-    return h.response(updateNote).code(200);
+    return h.response(updatedNote).code(200);
 };
-export const deleteNote = (request: Hapi.Request,h: Hapi.ResponseToolkit) => {
-  const tenantError = checkTenant(request);
-  if(tenantError){
-    return tenantError;
+export const deleteNote = async(request: Hapi.Request,h: Hapi.ResponseToolkit) => {
+  const tenantId = getTenantId(request);
+  if(!tenantId){
+    return Boom.unauthorized("Tenant ID is required");
   }
   const id = Number(request.params.id);
-  const index=notes.findIndex((note)=>note.id===id);
-  if (index === -1){
+  const deletedNote= await deleteNoteFromDatabase(id,tenantId);
+  if(!deletedNote){
     return Boom.notFound("Note not found");
   }
-  const deletedNote=notes[index];
-  notes.splice(index,1);
   return h.response(deletedNote).code(200);
 };
+
+export const patchNote=async(request: Hapi.Request,h:Hapi.ResponseToolkit)=>{
+  const tenantId=getTenantId(request);
+  if(!tenantId){
+    return Boom.unauthorized(
+      "Tenant ID is requireed"
+    );
+  }
+  const id=Number(request.params.id);
+  const payload=request.payload as {priority:Note["priority"];};
+  const patchedNote=await patchNoteInDatabase(id,payload.priority,tenantId);
+  if(!patchedNote){
+    return Boom.notFound("Note not found");
+  }
+  return h.response(patchedNote).code(200);
+};
+
 

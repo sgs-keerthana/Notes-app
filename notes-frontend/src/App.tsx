@@ -7,7 +7,7 @@ import NoteForm from "./components/NoteForm";
 import type { Note } from "./types/Note";
 import type { NoteFormData } from "./schemas/noteSchema";
 import { useNoteStore } from "./store/noteStore";
-import {fetchNotes, addNote, updateNote, deleteNote} from "./api/notesApi";
+import {fetchNotes, addNote, updateNote, deleteNote,patchNote} from "./api/notesApi";
 import { notesKeys } from "./queryKeys/notesKeys";
 function App() {
   // Get UI state from Zustand
@@ -39,7 +39,6 @@ function App() {
         if ("id" in note) {
           return updateNote(note);
         }
-
         // Creating new note
         return addNote(note);
       },
@@ -55,9 +54,19 @@ function App() {
         setShowForm(false);
       },
     });
+  const patchNoteMutation = useMutation({
+    mutationFn: patchNote,
+    onSuccess:()=>{
+      queryClient.invalidateQueries({
+        queryKey: notesKeys.all,
+      });
+    },
+    onError:(error)=>{
+      console.error("PATCH ERROR:",error);
+    },
+  });
 
   // DELETE /notes/{id}
-  
   const deleteNoteMutation = useMutation({
       mutationFn: (id:number)=> deleteNote(id),onSuccess: () => {
 
@@ -103,6 +112,14 @@ function App() {
   const handleDelete = ( id: number ) => {
     deleteNoteMutation.mutate(id);
   };
+  const handlePriorityChange=(
+    id: number,
+    priority: Note["priority"])=>{
+      patchNoteMutation.mutate({
+        id,
+        changes: {priority},
+      });
+    };
 
   // Filter notes
 
@@ -225,6 +242,7 @@ function App() {
                   note={note}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  onPriorityChange={handlePriorityChange}
                 />
 
               )
