@@ -1,5 +1,4 @@
 import type { Note } from "../types/Note";
-
 const API_URL = import.meta.env.VITE_API_URL;
 const TENANT_ID = import.meta.env.VITE_TENANT_ID;
 

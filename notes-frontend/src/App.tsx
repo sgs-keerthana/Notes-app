@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { useMutation,useQuery,useQueryClient} from "@tanstack/react-query";
 import Header from "./components/Header";
 import SearchBar from "./components/SearchBar";
-import NoteCard from "./components/NoteCard";
+//import NoteCard from "./components/NoteCard";
+import NotesGrid from "./components/NotesGrid";
 import NoteForm from "./components/NoteForm";
 import type { Note } from "./types/Note";
 import type { NoteFormData } from "./schemas/noteSchema";
@@ -42,14 +43,11 @@ function App() {
         // Creating new note
         return addNote(note);
       },
-
       onSuccess: () => {
-
         // Refresh notes data
         queryClient.invalidateQueries({
           queryKey: notesKeys.all,
         });
-
         setEditingNote(null);
         setShowForm(false);
       },
@@ -88,7 +86,6 @@ function App() {
         category: note.category,
         priority: note.priority,
       });
-
       return;
     }
     // Creating
@@ -101,14 +98,12 @@ function App() {
   };
 
   // Edit note
- 
   const handleEdit = ( note: Note) => {
     setEditingNote(note);
     setShowForm(true);
   };
 
   // Delete note
-
   const handleDelete = ( id: number ) => {
     deleteNoteMutation.mutate(id);
   };
@@ -120,9 +115,8 @@ function App() {
         changes: {priority},
       });
     };
-
+   
   // Filter notes
-
   const filteredNotes = useMemo(() => {
     return notes.filter((note) => {
       const search = searchTerm.toLowerCase();
@@ -131,11 +125,9 @@ function App() {
       return (matchesSearch && matchesCategory);
     });
   }, [
-    notes,searchTerm,category,
-  ]);
+    notes,searchTerm,category]);
 
   // Loading
-
   if (isLoading) {
     return (
       <div className="p-10 text-center">
@@ -145,13 +137,10 @@ function App() {
   }
 
   // Error
-  
   if (isError) {
     return (
       <div className="p-10 text-center text-red-500">
-        {error instanceof Error
-          ? error.message
-          : "Failed to fetch notes"}
+        {error instanceof Error ? error.message : "Failed to fetch notes"}
       </div>
     );
   }
@@ -159,14 +148,10 @@ function App() {
   // UI
   return (
     <div className="min-h-screen bg-gray-100">
-
       <div className="mx-auto max-w-5xl px-6 py-10">
-
         {/* Header */}
         <div className="flex items-start justify-between">
-
           <Header />
-
           <button
             onClick={() => {
               setEditingNote(null);
@@ -179,19 +164,14 @@ function App() {
 
         </div>
 
-
         {/* Search */}
-
         <SearchBar
           searchTerm={searchTerm}
           onSearch={setSearchTerm}
         />
 
-
         {/* Category buttons */}
-
         <div className="mb-6 flex gap-3">
-
           {[
             "All",
             "Work",
@@ -214,86 +194,52 @@ function App() {
             </button>
 
           ))}
-
         </div>
 
-
         {/* Notes */}
-
         {filteredNotes.length === 0 ? (
-
           <div className="rounded-xl bg-white p-10 text-center shadow-sm">
-
             <p className="text-gray-500">
               No notes found.
             </p>
-
           </div>
-
-        ) : (
-
-          <div className="grid gap-5 md:grid-cols-2">
-
-            {filteredNotes.map(
-              (note) => (
-
-                <NoteCard
-                  key={note.id}
-                  note={note}
+        ) : (  
+                <NotesGrid
+                  //key={note.id}
+                  notes={filteredNotes}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                   onPriorityChange={handlePriorityChange}
                 />
-
-              )
             )}
-
           </div>
-
-        )}
-
-      </div>
-
-
       {/* Modal */}
-
       {showForm && (
-
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
-
           onClick={() => {
             setEditingNote(null);
             setShowForm(false);
           }}
         >
-
           <div
             className="w-full max-w-lg"
-
             onClick={(e) =>
               e.stopPropagation()
             }
           >
-
             <NoteForm
               editingNote={editingNote}
-
               onSave={handleSave}
-
               onCancel={() => {
                 setEditingNote(null);
                 setShowForm(false);
               }}
             />
-
           </div>
-
         </div>
       )}
-
     </div>
   );
 }
-
 export default App;
