@@ -1,11 +1,15 @@
 import { getNotes,createNote,updateNote,deleteNote,patchNote } from "../handlers/notes.js";
 import type Hapi from "@hapi/hapi";
-import { noteSchema,idSchema,patchNoteSchema } from "../validators/valid.js";
-
+import { noteSchema,idSchema,patchNoteSchema, cursorpaginationQuerySchema } from "../validators/valid.js";
 export const registerNoteRoutes=( server: Hapi.Server)=>{
     server.route({
         method: "GET",
         path: "/notes",
+        options:{
+            validate:{
+            query: cursorpaginationQuerySchema
+        },
+    },
         handler: getNotes,
     });
     server.route({

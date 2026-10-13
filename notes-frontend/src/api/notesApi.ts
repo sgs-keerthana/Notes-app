@@ -2,9 +2,19 @@ import type { Note } from "../types/Note";
 const API_URL = import.meta.env.VITE_API_URL;
 const TENANT_ID = import.meta.env.VITE_TENANT_ID;
 
+export type CursorPaginatedNotes={
+    data: Note[];
+    nextCursor: number | null;
+    hasMore: boolean;
+};
 //Get /notes
-export const fetchNotes = async ():Promise<Note[]> =>{
-    const response = await fetch(API_URL, {
+export const fetchNotes = async (cursor: number | null | undefined,pageSize: number):Promise<CursorPaginatedNotes> =>{
+    const params = new URLSearchParams();
+    params.set("pageSize",String(pageSize));
+    if(cursor!==null && cursor !== undefined){
+        params.set("cursor",String(cursor));
+    }
+    const response = await fetch(`${API_URL}?${params.toString()}`, {
         method: "GET",
         headers: {
             "x-tenant-id": TENANT_ID,
@@ -76,7 +86,7 @@ export const patchNote=async({id,changes}:
         if(!response.ok){
             const errorText=await response.text();
             throw new Error(
-                'Failed to patch note:${response.status}${errorText}'
+                `Failed to patch note:${response.status}${errorText}`
             );
         }
         return response.json();

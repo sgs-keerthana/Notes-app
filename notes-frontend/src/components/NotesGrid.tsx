@@ -30,10 +30,7 @@ function PriorityRenderer(params: ICellRendererParams<Note>) {
 type ActionRendererProps = ICellRendererParams<Note> & {
     onEdit: (note: Note) => void;
     onDelete: (id: number) => void;
-    onPriorityChange: (
-      id: number,
-      priority: Note["priority"]
-    ) => void;
+    onPriorityChange: (id: number,priority: Note["priority"]) => void;
   };
 
 function ActionRenderer({data,onEdit,onDelete,onPriorityChange}: ActionRendererProps) {
@@ -104,8 +101,8 @@ function NotesGrid({
         filter: true,
         flex: 2.5,
         minWidth: 250,
-        wrapText: true,
-        autoHeight: true,
+        //wrapText: true,
+        //autoHeight: true,
       },
 
       {

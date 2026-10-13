@@ -11,15 +11,17 @@ const getTenantId=(request:Hapi.Request): string | null =>{
   return tenantId;
 };
 
-export const getNotes = async(request: Hapi.Request) => {
+export const getNotes = async(request: Hapi.Request,h: Hapi.ResponseToolkit) => {
   const tenantId = getTenantId(request);
   if (!tenantId) {
-    return Boom.unauthorized(
-      "Tenant ID is required"
-    );
+    return Boom.unauthorized("Tenant ID is required");
   }
-  const notes = await getNotesByTenant(tenantId);
-  return notes
+  const query = request.query as { cursor?: string; pageSize?:string};
+  const cursorVal = query.cursor && query.cursor!=="undefined" && query.cursor!=="null"?Number(query.cursor):null;
+  //const page = Number(query.page) || 1;
+  const pageSize = Number(query.pageSize) || 10;
+  const notesData = await getNotesByTenant(tenantId,isNaN(cursorVal as number)?null:cursorVal,pageSize);
+  return h.response(notesData).code(200);
 };
 export const createNote = async(request: Hapi.Request,h: Hapi.ResponseToolkit) => {
   const tenantId = getTenantId(request);
