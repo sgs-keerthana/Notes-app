@@ -8,6 +8,14 @@ type NotesGridProps = {
   onDelete: (id: number) => void;
   onPriorityChange: ( id: number, priority: Note["priority"]) => void;
 };
+
+const priorities=["Low","Medium","High"] as const;
+type Priority=(typeof priorities)[number];
+const getNextPriority=(currentPriority:Priority):Priority=>{
+  const currentIndex=priorities.indexOf(currentPriority);
+  const nextIndex=(currentIndex+1)%priorities.length;
+  return priorities[nextIndex];
+}
  // Priority Badge
 function PriorityRenderer(params: ICellRendererParams<Note>) {
   const priority = params.value as Note["priority"];
@@ -36,15 +44,15 @@ type ActionRendererProps = ICellRendererParams<Note> & {
 function ActionRenderer({data,onEdit,onDelete,onPriorityChange}: ActionRendererProps) {
   if (!data) {
     return null; }
-
-  let nextPriority: Note["priority"];
+  const nextPriority=getNextPriority(data.priority);
+  /*let nextPriority: Note["priority"];
     if(data.priority === "Low"){
         nextPriority="Medium";
     } else if (data.priority==="Medium"){
         nextPriority="High";
     } else{
         nextPriority="Low"
-    }
+    } */
   return (
     <div className="flex h-full items-center gap-2">
       <button

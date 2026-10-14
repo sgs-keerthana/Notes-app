@@ -23,3 +23,7 @@ export const cursorpaginationQuerySchema = Joi.object({
     cursor: Joi.number().integer().positive().allow(null).optional(),
     pageSize: Joi.number().integer().min(1).max(100).default(10)
 });
+
+export const createTenantSchema = Joi.object({
+    name: Joi.string().trim().min(1).max(100).required()
+});
